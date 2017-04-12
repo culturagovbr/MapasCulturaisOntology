@@ -43,9 +43,22 @@ class Plugin extends \MapasCulturais\Plugin {
     // Prefixo da URI das propriedades da Ontologia
     var $propertiesPrefix = 'http://vocab.cultura.gov.br/term/';
     
-    // Dicionário para mapear atributos das entidades para os atributos da ontologia
+    /** Dicionário para mapear atributos das entidades para os atributos da ontologia
+     * Do lado esquerdo temos a propriedade conforme ela aparece na estrutura de dados do Mapas Culturais
+     * Do lado direito temos o nome da propriedade na ontologia.
+     */
     var $propertiesMap = [
         'name' => 'nome',
+        'dataDeNascimento' => 'data-de-nascimento',
+        'genero' => 'genero',
+        'emailPublico' => 'email',
+        'telefonePublico' => 'telefone',
+        'site' => 'website',
+        'facebook' => 'perfil-facebook',
+        'twitter' => 'perfil-twitter',
+        'googleplus' => 'perfil-google',
+        'En_Municipio' => 'municipio',
+        'En_Estado' => 'uf',
         
     ];
 
@@ -92,10 +105,12 @@ class Plugin extends \MapasCulturais\Plugin {
                 // Iteramos por todas as propriedades da entidade
                 // Se houver um mapeamento de uma propriedade da entidade no mapas para uma propriedade da ontologia, adicionamos mais uma meta tag
                 foreach ($entityProperties as $propertyName => $propertyDefinition) {
-                
+                    
                     // Se existe um mapeamento com o nome desta propriedade e .... se a entidade tem um valor para esta propriedade
                     if (array_key_exists($propertyName, $plugin->propertiesMap) && !is_null($entity->{$propertyName})) {
                     
+                        
+                        
                         // Adicionamos mais uma meta tag para ser impressa
                         // O nome da propriedade é o prefixo da URI da Ontologia seguido do nome da propriedade 
                         // ex: http://vocab.cultura.gov.br/term/nome
@@ -107,6 +122,42 @@ class Plugin extends \MapasCulturais\Plugin {
                     }
                 
                 }
+
+                /////// RELAÇÕES 
+                
+                // Relações do Agente
+                if ($entityClassType == 'Agent') {
+                
+                    // Agente realiza Ação
+                    foreach ($entity->events as $event) {
+                    
+                        $metaTags[] = [ 
+                            'property' => $plugin->propertiesPrefix . 'organizaAcao',
+                            'content' => $event->getSingleUrl()
+                        ];
+                    
+                    }
+                    foreach ($entity->projects as $project) {
+                    
+                        $metaTags[] = [ 
+                            'property' => $plugin->propertiesPrefix . 'organizaAcao',
+                            'content' => $project->getSingleUrl()
+                        ];
+                    
+                    }
+                    
+                    // Agente mantem espaço
+                    foreach ($entity->spaces as $space) {
+                    
+                        $metaTags[] = [ 
+                            'property' => $plugin->propertiesPrefix . 'mantemEspaco',
+                            'content' => $space->getSingleUrl()
+                        ];
+                    
+                    }
+                
+                }
+                
 
                 // Imprime as meta tags
                 $plugin->printMetaTags($metaTags);
