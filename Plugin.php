@@ -41,7 +41,7 @@ class Plugin extends \MapasCulturais\Plugin {
     var $classPrefix = 'http://vocab.cultura.gov.br/';
     
     // Prefixo da URI das propriedades da Ontologia
-    var $propertiesPrefix = 'http://vocab.cultura.gov.br/';
+    var $propertiesPrefix = 'http://vocab.cultura.gov.br/term/';
     
     // Dicionário para mapear atributos das entidades para os atributos da ontologia
     var $propertiesMap = [
@@ -83,7 +83,8 @@ class Plugin extends \MapasCulturais\Plugin {
                 
                 // Definimos a primeira meta tag chamada "typeof" que indica de qual classe da ontologia é este indivíduo
                 // O valor desta propriedade é o prefixo da URI da Ontologia seguido do nome da classe
-                $metaTags['typeof'] = $plugin->classPrefix . $plugin->entityTypeMap[$entityClassType];
+                // ex: http://vocab.cultura.gov.br/Agente
+                $metaTags[] = [ 'typeof' => $plugin->classPrefix . $plugin->entityTypeMap[$entityClassType] ];
                 
                 // Pegamos a lista de propriedades da entidade
                 $entityProperties = $entity->getPropertiesMetadata();
@@ -96,11 +97,14 @@ class Plugin extends \MapasCulturais\Plugin {
                     if (array_key_exists($propertyName, $plugin->propertiesMap) && !is_null($entity->{$propertyName})) {
                     
                         // Adicionamos mais uma meta tag para ser impressa
-                        // O nome da propriedade é o prefixo da URI da Ontologia seguido do nome da propriedade
-                        $metaTags[$plugin->propertiesPrefix . $plugin->propertiesMap[$propertyName]] = $entity->{$propertyName};
+                        // O nome da propriedade é o prefixo da URI da Ontologia seguido do nome da propriedade 
+                        // ex: http://vocab.cultura.gov.br/term/nome
+                        $metaTags[] = [ 
+                            'property' => $plugin->propertiesPrefix . $plugin->propertiesMap[$propertyName],
+                            'content' => $entity->{$propertyName} 
+                        ];
                     
                     }
-                    
                 
                 }
 
@@ -117,18 +121,11 @@ class Plugin extends \MapasCulturais\Plugin {
     /**
      * Imprime as meta tags com as informações da entidade que estão relacionadas a ontolgia
      *
-     * Recebe um array com as meta tags que serão impressas. Espera que haja uma meta tag referente a classe da entidade, chamada typeof, 
-     * e uma série de meta tags que são as propriedades.
+     * Recebe um array com as meta tags que serão impressas. 
      * 
-     * A chave de cada item da array é o nome da propriedade e o valor é o valor.
+     * Cada item do array é um array de chaves e valores que são os atributos e valores da meta tag.
      * 
-     * Com exceção do item do array com a chave "typeof", todos os itens serão impressos no formato:
      * 
-     * <meta property="$propertyName" content="$propoertyValue" />
-     * 
-     * O typeof será impresso no formato: 
-     * 
-     * <meta typeof="$propoertyValue" />
      * 
      * @param array $metaTags
      *
@@ -138,18 +135,23 @@ class Plugin extends \MapasCulturais\Plugin {
         if (!is_array($metaTags))
             return;
        
-        foreach ($metaTags as $key => $value) {
+        foreach ($metaTags as $metaTag) {
         
-            if ($key == 'typeof') {
+            if (!is_array($metaTag))
+                continue;
             
-                echo "<meta $key=\"{$value}\" />\n";
-                
-            } else {
-                
-                echo "<meta property=\"{$key}\" content=\"{$value}\" />\n";
+            $meta = "<meta ";
+            
+            foreach ($metaTag as $key => $value) {
+            
+                    $meta .= "$key=\"{$value}\" " ;
             
             }
-        
+            
+            $meta .= "/>\n ";
+            
+            echo $meta;
+            
         }
         
     }
